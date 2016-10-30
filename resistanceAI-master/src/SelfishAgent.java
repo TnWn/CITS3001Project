@@ -21,8 +21,8 @@ public class SelfishAgent implements Agent{
 	private int numSpies;
 	private int missionNumber;
 		
-	private string lastLeader = "";
-	private string lastMission = "";
+	private Character lastLeader = "";
+	private String lastMission = "";
 	
 	public SelfishAgent(){
 		spyState = new HashMap<Character, Double>();
@@ -128,7 +128,7 @@ public class SelfishAgent implements Agent{
 	**/
 	public void get_ProposedMission(String leader, String mission){
 		this.proposed = mission;
-		lastLeader = leader;	//store last proposed details
+		lastLeader = leader.charAt(0);	//store last proposed details
 		lastMission = mission;	//^
 	}
 
@@ -176,17 +176,23 @@ public class SelfishAgent implements Agent{
    * @param yays the names of the agents who voted for the mission
    **/
   public void get_Votes(String yays){
-    	  if (yays.length()<((players.length())/2) // if vote didnt pass
-		{
-		  //
-		  //get leader
-		  //get proposed members
-		  //
-		  //if leader considered spy (and at least one member considered spy )
-		  	//incease P of leader, spy-member
-		  	//increase P of yays 
-		  
-		}
+	  	if (yays.length()<((players.length())/2) // if vote didnt pass
+	  	{
+	  		for(int i = 0; i < mostSpy.length(); i++){
+	  			if(lastLeader == mostSpy.charAt(i))	//if leader considerd a spy
+    			{
+	  				double factor = 0;
+	  				double leaderP = spyState.get(lastLeader)	//store leader P
+	  				for(int j = 0 ; j < lastMission.length(); j++)	//for length of mission string
+	  				{
+	  					factor = factor + (spyState.get(lastMission.charAt(j)))	//sum P of all proposed members
+	  				}
+	  				//leaderP = leaderP + factor/10|lastMission.length() ?
+	  				spyState.put(lastLeader,leaderP);	//store new P
+    			}
+    					
+    		}
+    	}		
   }
   
   /**
@@ -230,6 +236,12 @@ public class SelfishAgent implements Agent{
 				spyState.put(c,1.0);
 			}
 		}
+		//if traitors > 0 
+			//get mission details
+			// onlooker P reduces
+		//if traitors = 0
+			//get mission details
+			//onlooker P increases
   }
 
 
@@ -255,25 +267,15 @@ public class SelfishAgent implements Agent{
    * @param accused the names of the Agents being Accused, concatenated in a String.
    * */
   public void get_Accusation(String accuser, String accused){
-	Double accuserP = spyState.get(accuser.charAt(0));	//get accuser P
-	Double accusedP = spyState.get(accused.charAt(0));	//get accused P
+	char accuserChar = accuser.charAt(0);
+	char accusedChar = accused.charAt(0);
+	double accuserP = spyState.get(accuserChar);	//get accuser P
+	double accusedP = spyState.get(accusedChar);	//get accused P
 	if (accuserP > accusedP)	//if the accuser is more likely of being spy than the accused
 		{
-		//increase P  
+		accuserP = accuserP + (accuserP - accusedP)/10;//may change factor???~~~~~~~~~~~~~~~~~~~~~
+		SpyState.put(accuserChar,accuserP);		//increase accuser's P
 		}
-	  
-	  //if accuser prob > accused prob increase prob
-	  //if accuser considered spy & accused not incease prob
-	  /*
-	  for(int i = 0; i < mission.length(); i++){
-			for(int j = 0; j < mostSpy.length(); j++){
-				if(mission.charAt(i) == mostSpy.charAt(j)) vote = false;	//If a player on the mission is one of the most likely spies, vote no
-				break;
-			}
-			if(!vote) break;
-		}		
-		*/
-  }
   }
 
   private void updateWentAgents(){

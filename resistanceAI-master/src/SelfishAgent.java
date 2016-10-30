@@ -3,7 +3,7 @@ import java.util.*;
 
 /**
  * @author Wesley
- *
+ * @author 21503781
  */
 public class SelfishAgent implements Agent{
 
@@ -20,6 +20,9 @@ public class SelfishAgent implements Agent{
 	private int traitors=0;
 	private int numSpies;
 	private int missionNumber;
+		
+	private string lastLeader = "";
+	private string lastMission = "";
 	
 	public SelfishAgent(){
 		spyState = new HashMap<Character, Double>();
@@ -125,6 +128,8 @@ public class SelfishAgent implements Agent{
 	**/
 	public void get_ProposedMission(String leader, String mission){
 		this.proposed = mission;
+		lastLeader = leader;	//store last proposed details
+		lastMission = mission;	//^
 	}
 
 	/**
@@ -171,8 +176,19 @@ public class SelfishAgent implements Agent{
    * @param yays the names of the agents who voted for the mission
    **/
   public void get_Votes(String yays){
-    
+    	  if (yays.length()<((players.length())/2) // if vote didnt pass
+		{
+		  //
+		  //get leader
+		  //get proposed members
+		  //
+		  //if leader considered spy (and at least one member considered spy )
+		  	//incease P of leader, spy-member
+		  	//increase P of yays 
+		  
+		}
   }
+  
   /**
    * Reports the agents being sent on a mission.
    * Should be able to be infered from tell_ProposedMission and tell_Votes, but incldued for completeness.
@@ -239,7 +255,25 @@ public class SelfishAgent implements Agent{
    * @param accused the names of the Agents being Accused, concatenated in a String.
    * */
   public void get_Accusation(String accuser, String accused){
-
+	Double accuserP = spyState.get(accuser.charAt(0));	//get accuser P
+	Double accusedP = spyState.get(accused.charAt(0));	//get accused P
+	if (accuserP > accusedP)	//if the accuser is more likely of being spy than the accused
+		{
+		//increase P  
+		}
+	  
+	  //if accuser prob > accused prob increase prob
+	  //if accuser considered spy & accused not incease prob
+	  /*
+	  for(int i = 0; i < mission.length(); i++){
+			for(int j = 0; j < mostSpy.length(); j++){
+				if(mission.charAt(i) == mostSpy.charAt(j)) vote = false;	//If a player on the mission is one of the most likely spies, vote no
+				break;
+			}
+			if(!vote) break;
+		}		
+		*/
+  }
   }
 
   private void updateWentAgents(){

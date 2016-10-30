@@ -20,8 +20,6 @@ public class SelfishAgent implements Agent{
 	private int traitors=0;
 	private int numSpies;
 	private int missionNumber;
-	private char test;
-	
 	
 	public SelfishAgent(){
 		spyState = new HashMap<Character, Double>();
@@ -40,7 +38,7 @@ public class SelfishAgent implements Agent{
 		givenSpies = new HashSet<Character>();
 		numSpies = (int) Math.floor((players.length()-1)/3) + 1;	//Calculates the number of spies in the game based on the number of players. Trust me.
 		for(int i= 0; i < players.length(); i++){
-			spyState.put(players.charAt(i),(double) numSpies/players.length());	//Default probability is (number of spies)/(number of players)
+			spyState.put(players.charAt(i),(double) numSpies/(players.length() - 1));	//Default probability is (number of spies)/(number of players)
 		}
 		names = spyState.keySet();
 		this.name = name.charAt(0);
@@ -51,8 +49,7 @@ public class SelfishAgent implements Agent{
 		if(spy) //If a spy, create an list of all spies
 		{
 			for(int i = 0; i < spies.length(); i++){
-				test = spies.charAt(i);
-				givenSpies.add(test);
+				givenSpies.add(spies.charAt(i));
 			}		
 		}	
 		missionNumber = mission;
@@ -135,25 +132,6 @@ public class SelfishAgent implements Agent{
 	* @return true, if the agent votes for the mission, false, if they vote against it.
 	* */
 	public boolean do_Vote(){
-		/*if(proposed.indexOf(name) == -1)	//if mission does not contain self
-			return false; 								//disapprove
-		int spynum = 0;
-		for(char c : proposed.toCharArray()) //Count known spies on proposed mission
-		{
-			if(spyState.get(c) != 0)
-				spynum++;
-		}
-		if(spy)	//if agent is a spy
-		{
-			if(spynum == proposed.length()) //Do not approve mission containing all spies
-				return false;
-			else
-				return true;
-		}
-		else	//if agent is resistance
-		{
-			return (spynum == 0); //Only approve missions containing no known spies
-		}*/
 		boolean vote = false;
 		if(this.spy) vote = spyVote();
 		else vote = resistanceVote();
@@ -235,7 +213,7 @@ public class SelfishAgent implements Agent{
 			for(char c : mission.toCharArray()){
 				spyState.put(c,1.0);
 			}
-		}else updateWentAgents();
+		}
   }
 
 
@@ -247,6 +225,7 @@ public class SelfishAgent implements Agent{
    * @return a string containing the name of each accused agent. 
    * */
   public String do_Accuse(){
+	  updateWentAgents();
 	  String accused = "";
 	  for(char c : names){
 		  if(spyState.get(c) == 0.0) accused +=c;
@@ -272,18 +251,22 @@ public class SelfishAgent implements Agent{
 	  
 	  char[] went = new char[this.mission.length()];
 	  char[] stayed = new char[spyState.size() - this.mission.length()];
-	  for(int i = 0; i < went.length; i++){
-		  went[i] = this.mission.charAt(i);
-	  }
-	  for(int i = 0; i < stayed.length; i++){
-		  for(Character agent : this.names){
-			  if(mission.indexOf(agent) != -1) stayed[i] = agent;
+	  Set<Character> names = new HashSet<Character>();
+	  names.addAll(this.names);
+	  int wentI = 0;
+	  int stayedJ = 0;
+	  for(char name : names){
+		  if(mission.indexOf(name) != -1){
+			  went[wentI] = name;
+			  wentI++;
+		  }else{
+			  stayed[stayedJ] = name;
+			  stayedJ++;
 		  }
 	  }
-
 	  LinkedList<char[]> allCombos = new LinkedList<char[]>();
 	  char[] combination = new char[traitors];
-	  getCombinations(went,combination, 0, went.length - 1, 0, traitors, allCombos, 0);
+	  getCombinations(allCombos, went, went.length, traitors, 0, combination, 0);
 	  double bProbability = findPB(allCombos, went);
 	  for(int i = 0; i < went.length; i++){ //Update the probability of all agents that went on the mission
 		  double bGivenA = pBGivenA(allCombos, went[i], went); 
@@ -291,7 +274,7 @@ public class SelfishAgent implements Agent{
 		  double newProbability = aProbability * bGivenA / bProbability;
 		  spyState.put(went[i], newProbability);
 	  }
-	  updateNonParticipants(went, traitors);
+	  //updateNonParticipants(went, traitors);
 	  /*for(char a : names){
 		  aProbability = spyState.get(a);
 		  
@@ -304,17 +287,18 @@ public class SelfishAgent implements Agent{
 	  else return nCr(n, r-1) * (n-r)/(r+1);
   }
   
-  private void getCombinations(char[] went, char[] combination, int start, int end, int index, int r, LinkedList<char[]> results, int row){
-	  if(index == r){
-		  results.add(combination);
-		  row++;
+  
+  private void getCombinations(LinkedList<char[]> results, char[] input, int end, int numTraitors, int index, char[] combination, int start){
+	  if(index == numTraitors){
+		  char[] comboCopy = new char[combination.length];
+		  System.arraycopy(combination, 0, comboCopy, 0, combination.length);
+		  results.add(comboCopy);
 		  return;
 	  }
-	  
-	  for(int i = start; i <= end && end-i+1 >= r-index; i++){
-		  combination[index] = went[i];
-		  getCombinations(went, combination, i+1, end, index +1, r, results, row);
-	  }
+	  if(start >= end) return;
+	  combination[index] = input[start];
+	  getCombinations(results, input, end, numTraitors, index + 1, combination, start+1);
+	  getCombinations(results, input, end, numTraitors, index, combination, start+1);  
   }
 	   
   private double findPB(LinkedList<char[]> combos, char[] went){
@@ -382,8 +366,6 @@ public class SelfishAgent implements Agent{
 		  return;
 	  }
 	  //double remainingSpyProbability = spiesLeft/(players.length() - went.length); 
-	  
-
   }
   
 }

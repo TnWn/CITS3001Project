@@ -280,7 +280,6 @@ public class SelfishAgent implements Agent{
 
   private void updateWentAgents(){
 	  /*TODO: 
-	   * Update the probabilities for each agent that did not go on the mission
 	   * Make sure that it works
 	   * Make sure that it works in the event of mission success 
 	   */
@@ -305,23 +304,21 @@ public class SelfishAgent implements Agent{
 	  getCombinations(allCombos, went, went.length, traitors, 0, combination, 0);
 	  double bProbability = findPB(allCombos, went);
 	  for(int i = 0; i < went.length; i++){ //Update the probability of all agents that went on the mission
-		  double bGivenA = pBGivenA(allCombos, went[i], went); 
 		  double aProbability = spyState.get(went[i]);
+		  if(aProbability >= 1) continue;		//If a player is confirmed to be a spy, then their probability stays at 1
+		  double bGivenA = pBGivenA(allCombos, went[i], went); 
 		  double newProbability = aProbability * bGivenA / bProbability;
+		  if(newProbability == 0) newProbability = aProbability/2;		//Causes players to not gain immunity after one successful round
 		  spyState.put(went[i], newProbability);
 	  }
-	  //updateNonParticipants(went, traitors);
-	  /*for(char a : names){
-		  aProbability = spyState.get(a);
-		  
-	  }*/
-	  
-	  
+	  updateNonParticipants(went, traitors);
+	  return;
   }
-  private int nCr(int n, int r){
+  
+  /*private int nCr(int n, int r){
 	  if(r == 0) return 1;
 	  else return nCr(n, r-1) * (n-r)/(r+1);
-  }
+  }*/
   
   
   private void getCombinations(LinkedList<char[]> results, char[] input, int end, int numTraitors, int index, char[] combination, int start){
@@ -387,21 +384,43 @@ public class SelfishAgent implements Agent{
   private void updateNonParticipants(char[] went, int traitors){
 	  int spiesLeft = numSpies - traitors;
 	  if(spiesLeft == 0){
-		  for(int i = 0; i < players.length(); i++){
+		  for(char c: spyState.keySet()){
 			  boolean inWent = false;
-			  for(int j = 0; j < went.length; j++){
-				  if(players.charAt(i) == went[j]){
+			  for(int i = 0; i < went.length; i++){
+				  if(c == went[i]){
+					  inWent = true; 
+					  break;
+				  }
+			  }
+			  if(!inWent)spyState.put(c, 0.0);
+			  else spyState.put(c, 1.0); 
+		  }
+		  return;
+	  }
+	  int staying = players.length() - went.length;
+	  int denom = spiesLeft*staying;
+	  double multiplyer = 1.0;
+	  double stayingRatio = (double) spiesLeft/staying;
+	  double goingRatio = (double) traitors/went.length;
+	  if(stayingRatio < goingRatio) multiplyer = (double)(denom + 1)/denom;
+	  if(stayingRatio > goingRatio) multiplyer = (double)(denom - 1)/denom;
+	  if(multiplyer!=1){
+		  for(char c : spyState.keySet()){
+			  boolean inWent = false;
+			  for(int i = 0; i < went.length; i++){
+				  if(c == went[i]){
 					  inWent = true;
 					  break;
 				  }
 			  }
-			  if(!inWent)
-				  spyState.put(players.charAt(i), 0.0);
-			  else spyState.put(players.charAt(i), 1.0); 
+			  if(!inWent){
+				  double oldP = spyState.get(c);
+				  double newP = oldP * multiplyer;
+				  spyState.put(c, newP);
+			  }
 		  }
-		  return;
 	  }
-	  //double remainingSpyProbability = spiesLeft/(players.length() - went.length); 
+	  return;
   }
   
 }

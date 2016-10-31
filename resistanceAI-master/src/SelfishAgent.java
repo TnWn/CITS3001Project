@@ -20,6 +20,7 @@ public class SelfishAgent implements Agent{
 	private int traitors=0;
 	private int numSpies;
 	private int missionNumber;
+	private int failures;
 	
 	public SelfishAgent(){
 		spyState = new HashMap<Character, Double>();
@@ -35,23 +36,26 @@ public class SelfishAgent implements Agent{
 	* @param failures the number of failed missions
 	* */
 	public void get_status(String name, String players, String spies, int mission, int failures){
-		givenSpies = new HashSet<Character>();
-		numSpies = (int) Math.floor((players.length()-1)/3) + 1;	//Calculates the number of spies in the game based on the number of players. Trust me.
-		for(int i= 0; i < players.length(); i++){
-			spyState.put(players.charAt(i),(double) numSpies/(players.length() - 1));	//Default probability is (number of spies)/(number of players)
+		if(spyState.isEmpty()){
+			givenSpies = new HashSet<Character>();
+			numSpies = (int) Math.floor((players.length()-1)/3) + 1;//Calculates the number of spies in the game based on the number of players. Trust me.
+			for(int i= 0; i < players.length(); i++){
+				spyState.put(players.charAt(i),(double) numSpies/(players.length() - 1));	//Default probability is (number of spies)/(number of players)
+			}
+			names = spyState.keySet();
+			this.name = name.charAt(0);
+			this.players = players;
+			this.spies = spies;
+			if(spies.indexOf(name)!=-1)spy = true;
+			if(!spy) spyState.put(this.name, 0.0);
+			if(spy) //If a spy, create an list of all spies
+			{
+				for(int i = 0; i < spies.length(); i++){
+					givenSpies.add(spies.charAt(i));
+				}		
+			}	
 		}
-		names = spyState.keySet();
-		this.name = name.charAt(0);
-		this.players = players;
-		this.spies = spies;
-		if(spies.indexOf(name)!=-1)spy = true;
-		if(!spy) spyState.put(this.name, 0.0);
-		if(spy) //If a spy, create an list of all spies
-		{
-			for(int i = 0; i < spies.length(); i++){
-				givenSpies.add(spies.charAt(i));
-			}		
-		}	
+		this.failures = failures;
 		missionNumber = mission;
 	}
   
@@ -157,6 +161,7 @@ public class SelfishAgent implements Agent{
 		nameList.remove(name);	//Make sure not to consider ourselves, since we are not a spy
 		String mostSpy = likelySpies(numSpies, nameList);
 		for(int i = 0; i < mission.length(); i++){
+			if(spyState.get(mission.charAt(i)) == 1.0) vote = false; 	//If mission contains confirmed spy, vote no
 			for(int j = 0; j < mostSpy.length(); j++){
 				if(mission.charAt(i) == mostSpy.charAt(j)) vote = false;	//If a player on the mission is one of the most likely spies, vote no
 				break;
@@ -188,6 +193,8 @@ public class SelfishAgent implements Agent{
    **/
   public boolean do_Betray(){	  
 		if(!spy) return false;
+		if(missionNumber == 1) return false;
+		if(failures == 2) return true;	//If 1 fail away from winning, always fail
 		int spynum = 0;
 		for(int i = 0; i < mission.length(); i++){ //get count of spies on mission with agent
 			if(spies.contains(String.valueOf(mission.charAt(i)))) spynum++;
@@ -228,7 +235,7 @@ public class SelfishAgent implements Agent{
 	  updateWentAgents();
 	  String accused = "";
 	  for(char c : names){
-		  if(spyState.get(c) == 0.0) accused +=c;
+		  if(spyState.get(c) == 1.0) accused +=c;
 	  }
 		return accused;
   }
@@ -244,9 +251,7 @@ public class SelfishAgent implements Agent{
 
   private void updateWentAgents(){
 	  /*TODO: 
-	   * Update the probabilities for each agent that did not go on the mission
 	   * Make sure that it works
-	   * Make sure that it works in the event of mission success 
 	   */
 	  
 	  char[] went = new char[this.mission.length()];
@@ -269,23 +274,21 @@ public class SelfishAgent implements Agent{
 	  getCombinations(allCombos, went, went.length, traitors, 0, combination, 0);
 	  double bProbability = findPB(allCombos, went);
 	  for(int i = 0; i < went.length; i++){ //Update the probability of all agents that went on the mission
-		  double bGivenA = pBGivenA(allCombos, went[i], went); 
 		  double aProbability = spyState.get(went[i]);
+		  if(aProbability >= 1) continue;		//If a player is confirmed to be a spy, then their probability stays at 1
+		  double bGivenA = pBGivenA(allCombos, went[i], went); 
 		  double newProbability = aProbability * bGivenA / bProbability;
+		  if(newProbability == 0) newProbability = aProbability/2;		//Causes players to not gain immunity after one successful round
 		  spyState.put(went[i], newProbability);
 	  }
-	  //updateNonParticipants(went, traitors);
-	  /*for(char a : names){
-		  aProbability = spyState.get(a);
-		  
-	  }*/
-	  
-	  
+	  updateNonParticipants(went, traitors);
+	  return;
   }
-  private int nCr(int n, int r){
+  
+  /*private int nCr(int n, int r){
 	  if(r == 0) return 1;
 	  else return nCr(n, r-1) * (n-r)/(r+1);
-  }
+  }*/
   
   
   private void getCombinations(LinkedList<char[]> results, char[] input, int end, int numTraitors, int index, char[] combination, int start){
@@ -351,21 +354,43 @@ public class SelfishAgent implements Agent{
   private void updateNonParticipants(char[] went, int traitors){
 	  int spiesLeft = numSpies - traitors;
 	  if(spiesLeft == 0){
-		  for(int i = 0; i < players.length(); i++){
+		  for(char c: spyState.keySet()){
 			  boolean inWent = false;
-			  for(int j = 0; j < went.length; j++){
-				  if(players.charAt(i) == went[j]){
+			  for(int i = 0; i < went.length; i++){
+				  if(c == went[i]){
+					  inWent = true; 
+					  break;
+				  }
+			  }
+			  if(!inWent)spyState.put(c, 0.0);
+			  else spyState.put(c, 1.0); 
+		  }
+		  return;
+	  }
+	  int staying = players.length() - went.length;
+	  int denom = spiesLeft*staying;
+	  double multiplyer = 1.0;
+	  double stayingRatio = (double) spiesLeft/staying;
+	  double goingRatio = (double) traitors/went.length;
+	  if(stayingRatio > goingRatio) multiplyer = (double)(denom + 1)/denom;
+	  if(stayingRatio < goingRatio) multiplyer = (double)(denom - 1)/denom;
+	  if(multiplyer!=1){
+		  for(char c : spyState.keySet()){
+			  boolean inWent = false;
+			  for(int i = 0; i < went.length; i++){
+				  if(c == went[i]){
 					  inWent = true;
 					  break;
 				  }
 			  }
-			  if(!inWent)
-				  spyState.put(players.charAt(i), 0.0);
-			  else spyState.put(players.charAt(i), 1.0); 
+			  double oldP = spyState.get(c);
+			  if(!inWent && oldP != 1){				  
+				  double newP = oldP * multiplyer;
+				  spyState.put(c, newP);
+			  }
 		  }
-		  return;
 	  }
-	  //double remainingSpyProbability = spiesLeft/(players.length() - went.length); 
+	  return;
   }
   
 }

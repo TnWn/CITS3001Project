@@ -140,10 +140,12 @@ public class Game{
   private void statusUpdate(int round, int fails){
     for(Character c: players.keySet()){
       if(spies.contains(c)){
-        stopwatchOn(); players.get(c).get_status(""+c,playerString,spyString,round,fails); stopwatchOff(100,c);
+        //stopwatchOn(); 
+    	  players.get(c).get_status(""+c,playerString,spyString,round,fails); //stopwatchOff(100,c);
       }
       else{ 
-        stopwatchOn(); players.get(c).get_status(""+c,playerString,resString,round,fails); stopwatchOff(100,c);
+        //stopwatchOn();
+        players.get(c).get_status(""+c,playerString,resString,round,fails); //stopwatchOff(100,c);
       }
     }
   }
@@ -156,7 +158,8 @@ public class Game{
    * */
   private String nominate(int round, Character leader){
     int mNum = missionNum[numPlayers-5][round-1];
-    stopwatchOn(); String team = players.get(leader).do_Nominate(mNum); stopwatchOff(1000,leader);
+    //stopwatchOn(); 
+    String team = players.get(leader).do_Nominate(mNum); //stopwatchOff(1000,leader);
     char[] tA = team.toCharArray();
     Arrays.sort(tA);
     boolean legit = tA.length==mNum;
@@ -169,7 +172,8 @@ public class Game{
       for(int i = 0; i< mNum; i++) team+=(char)(65+i);
     }
     for(Character c: players.keySet()){
-      stopwatchOn(); players.get(c).get_ProposedMission(leader+"", team); stopwatchOff(100, c);
+      //stopwatchOn(); 
+    	players.get(c).get_ProposedMission(leader+"", team); //stopwatchOff(100, c);
     }
     log(leader+" nominated "+team);
     return team;
@@ -184,17 +188,17 @@ public class Game{
    int votes = 0;
    String yays = "";
    for(Character c: players.keySet()){
-      stopwatchOn(); 
+      //stopwatchOn(); 
       if(players.get(c).do_Vote()){
         votes++;
         yays+=c;
        }
-      stopwatchOff(1000,c);
+      //stopwatchOff(1000,c);
     }
     for(Character c: players.keySet()){
-      stopwatchOn();
+      //stopwatchOn();
       players.get(c).get_Votes(yays);
-      stopwatchOff(100,c);
+      //stopwatchOff(100,c);
     }
     log(votes+" votes for: "+yays);
     return (votes>numPlayers/2);  
@@ -210,20 +214,20 @@ public class Game{
    * */
   public int mission(String team){
     for(Character c: players.keySet()){
-      stopwatchOn();
+      //stopwatchOn();
       players.get(c).get_Mission(team);
-      stopwatchOff(100,c);
+      //stopwatchOff(100,c);
     }
     int traitors = 0;
     for(Character c: team.toCharArray()){
-      stopwatchOn();
+      //stopwatchOn();
       if(spies.contains(c) && players.get(c).do_Betray()) traitors++;
-      stopwatchOff(1000,c);
+     //stopwatchOff(1000,c);
     }
     for(Character c: players.keySet()){
-      stopwatchOn();
+      //stopwatchOn();
       players.get(c).get_Traitors(traitors);
-      stopwatchOff(100,c);
+      //stopwatchOff(100,c);
     }
     log(traitors +(traitors==1?" spy ":" spies ")+ "betrayed the mission");
     return traitors;  
@@ -253,16 +257,16 @@ public class Game{
       statusUpdate(round+1, fails);
       HashMap<Character,String> accusations = new HashMap<Character, String>();
       for(Character c: players.keySet()){
-        stopwatchOn();
+        //stopwatchOn();
         accusations.put(c,players.get(c).do_Accuse());
-        stopwatchOff(1000,c);
+        //stopwatchOff(1000,c);
       }
       for(Character c: players.keySet()){
         log(c+" accuses "+accusations.get(c));
         for(Character a: players.keySet()){
-          stopwatchOn();
+          //stopwatchOn();
           players.get(a).get_Accusation(c+"", accusations.get(c));
-          stopwatchOff(100,c);
+          //stopwatchOff(100,c);
         }
       }  
     }
@@ -353,7 +357,8 @@ public class Game{
       int playerNum = 5+tRand.nextInt(6);
       for(int i = 0; i<playerNum; i++){
         int index = tRand.nextInt(agents.length);
-        g.stopwatchOn();char name = g.addPlayer(agents[index].getAgent());g.stopwatchOff(1000,name);
+        //g.stopwatchOn();
+        char name = g.addPlayer(agents[index].getAgent());//g.stopwatchOff(1000,name);
         g.log("Player "+ agents[index].getName()+" from "+agents[index].getAuthors()+" is "+name);
       }
       g.setup();
@@ -391,24 +396,24 @@ public class Game{
    **/
   public static void main(String[] args){
     /* Run a single game*/
-    /*Game g = new Game();
+    Game g = new Game();
     g.stopwatchOn();g.addPlayer(new RandomAgent());g.stopwatchOff(1000,'A');
     g.stopwatchOn();g.addPlayer(new RandomAgent());g.stopwatchOff(1000,'B');
     g.stopwatchOn();g.addPlayer(new RandomAgent());g.stopwatchOff(1000,'C');
     g.stopwatchOn();g.addPlayer(new RandomAgent());g.stopwatchOff(1000,'D');
-    g.stopwatchOn();g.addPlayer(new RandomAgent());g.stopwatchOff(1000,'E');
+    g.stopwatchOn();g.addPlayer(new SelfishAgent());g.stopwatchOff(1000,'E');
     g.setup();
     g.play();
-    */
+    
     /*Run a tournament*/
-    try{
+    /*try{
       File f = new File("Results.html");
       FileWriter fw = new FileWriter(f);
       Competitor[] contenders = {new Competitor(new SelfishAgent(),"Bayes","Tim")};
       fw.write(tournament(contenders, 10));
       fw.close();
     }
-    catch(IOException e){System.out.println("IO fail");}
+    catch(IOException e){System.out.println("IO fail");}*/
   }
 
 }  

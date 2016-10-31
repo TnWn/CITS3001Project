@@ -3,7 +3,7 @@ import java.util.*;
 
 /**
  * @author Wesley
- *
+ * @author 21503781
  */
 public class SelfishAgent implements Agent{
 
@@ -20,8 +20,12 @@ public class SelfishAgent implements Agent{
 	private int traitors=0;
 	private int numSpies;
 	private int missionNumber;
+<<<<<<< HEAD
 	private int failures;
 	
+=======
+		
+>>>>>>> refs/remotes/origin/master
 	private Character lastLeader = "";
 	private String lastMission = "";
 	
@@ -248,7 +252,11 @@ public class SelfishAgent implements Agent{
 			// onlooker P reduces
 		//if traitors = 0
 			//get mission details
+<<<<<<< HEAD
 			//onlooker P increases		
+=======
+			//onlooker P increases
+>>>>>>> refs/remotes/origin/master
   }
 
 
@@ -408,8 +416,13 @@ public class SelfishAgent implements Agent{
 	  double multiplyer = 1.0;
 	  double stayingRatio = (double) spiesLeft/staying;
 	  double goingRatio = (double) traitors/went.length;
+<<<<<<< HEAD
 	  if(stayingRatio > goingRatio) multiplyer = (double)(denom + 1)/denom;
 	  if(stayingRatio < goingRatio) multiplyer = (double)(denom - 1)/denom;
+=======
+	  if(stayingRatio < goingRatio) multiplyer = (double)(denom + 1)/denom;
+	  if(stayingRatio > goingRatio) multiplyer = (double)(denom - 1)/denom;
+>>>>>>> refs/remotes/origin/master
 	  if(multiplyer!=1){
 		  for(char c : spyState.keySet()){
 			  boolean inWent = false;
@@ -419,8 +432,13 @@ public class SelfishAgent implements Agent{
 					  break;
 				  }
 			  }
+<<<<<<< HEAD
 			  double oldP = spyState.get(c);
 			  if(!inWent && oldP != 1){				  
+=======
+			  if(!inWent){
+				  double oldP = spyState.get(c);
+>>>>>>> refs/remotes/origin/master
 				  double newP = oldP * multiplyer;
 				  spyState.put(c, newP);
 			  }
